@@ -2,16 +2,13 @@ import cv2
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import os
 
 def deskew_image(image):
+    print(os.getcwd())
     #load image in gray scale
     image = cv2.imread(image,cv2.IMREAD_GRAYSCALE)
-    cv2.imwrite("deskewed_out.jpg", image)
-    plt.imshow(deskew, cmap='gray')
-    plt.title("Deskewed Image")
-    plt.axis('off')
-    plt.show()
-
+    
     #convert image to binary and invert
     _, binary = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
@@ -47,7 +44,7 @@ def deskew_image(image):
     return deskewed
 
 if __name__ == '__main__':
-    deskew = deskew_image("../assets/img/sheet_music.png")
+    deskew = deskew_image("./assets/img/sheet_music.jpg")
 
     cv2.imwrite("deskewed_out.jpg", deskew)
     plt.imshow(deskew, cmap='gray')
