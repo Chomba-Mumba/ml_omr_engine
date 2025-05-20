@@ -90,21 +90,41 @@ class OMREngineUNet(tf.keras.Model):
         input = self.pen_conv(input)
 
         return self.final_conv(input)
+    
+    def load_data(self, image_path, mask_path):
+        #read the images folder like a list
+        images = os.listdir(image_path)
+        masks = os.listdir(mask_path)
 
-    def pre_process(self, img):
+        orig_imgs = []
+        mask_imgs = []
+        for file in images:
+            orig_imgs.append(file)
+        for file in masks:
+            mask_imgs.append(file)
+
+        orig_imgs.sort()
+        mask_imgs.sort()
+    
+        return orig_imgs, mask_imgs
+
+    def pre_process(self, target_shape_img, target_shape_mask, image_path, mask_path):
+
+        imgs,masks = self.load_data(image_path, mask_path)
+
         # Pull the relevant dimensions for image and mask
-        m = len(img)                     # number of images
-        i_h,i_w,i_c = target_shape_img   # pull height, width, and channels of image
-        m_h,m_w,m_c = target_shape_mask  # pull height, width, and channels of mask
+        n_imgs = len(imgs)
+        i_h,i_w,i_c = target_shape_img   
+        m_h,m_w,m_c = target_shape_mask
         
-        # Define X and Y as number of images along with shape of one image
-        X = np.zeros((m,i_h,i_w,i_c), dtype=np.float32)
-        y = np.zeros((m,m_h,m_w,m_c), dtype=np.int32)
+        # define X and y as number of images along with shape of one image
+        X = np.zeros((n_imgs,i_h,i_w,i_c), dtype=np.float32)
+        y = np.zeros((n_imgs,m_h,m_w,m_c), dtype=np.int32)
     
         #resize images and masks
-        for file in img:
+        for file in imgs:
             #convert image into array of desired shape (3 channels)
-            index = img.index(file)
+            index = imgs.index(file)
             path = os.path.join(path1, file)
             single_img = Image.open(path).convert('RGB')
             single_img = single_img.resize((i_h,i_w))
@@ -112,7 +132,7 @@ class OMREngineUNet(tf.keras.Model):
             single_img = single_img/256.
             X[index] = single_img
                 
-            single_mask_ind = mask[index]
+            single_mask_ind = masks[index]
             path = os.path.join(path2, single_mask_ind)
             single_mask = Image.open(path)
             single_mask = single_mask.resize((m_h, m_w))
@@ -121,14 +141,5 @@ class OMREngineUNet(tf.keras.Model):
             y[index] = single_mask
         return X,y
     
-if __name__ == "__main__":    # Complete the model with 1 3x3 convolution layer (Same as the prev Conv Layers)
-    # Followed by a 1x1 Conv layer to get the image to the desired size. 
-    # Observe the number of channels will be equal to number of output classes
-    conv9 = Conv2D(n_filters,
-                 3,
-                 activation='relu',
-                 padding='same',
-                 kernel_initializer='he_normal')(ublock9)
-
-    conv10 = Conv2D(n_classes, 1, padding='same')(conv9)
+if __name__ == "__main__":    
     pass
