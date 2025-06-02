@@ -11,7 +11,7 @@ from tf.keras.models import Sequential
 from tf.keras.layers import Conv2D, Conv2DTranspose, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization, concatenate
 
 class OMREngineUNet(tf.keras.Model):
-    def __init__(self, n_blocks, p_size=None, 
+    def __init__(self, n_blocks, p_size=(2,2), 
                  dropout_prob=0.3, n_layers=2, n_filters=32, 
                  kernel_size=3, act_func='relu', kernel_init='HeNormal', 
                  pad='same', stride=2, n_classes=10):
@@ -40,8 +40,9 @@ class OMREngineUNet(tf.keras.Model):
 
             #save skip connection without max pooling to prevent loss
             self.skip_connections.append(keras.Sequential(temp))
-
-            if p_size and i!=n_blocks:
+            
+            #add pooling to all encoder blocsk except last
+            if i!=n_blocks:
                 temp.append(MaxPooling2D(pool_size=p_size))
             
             self.encoder_blocks.append(keras.Sequential(temp))
@@ -57,6 +58,8 @@ class OMREngineUNet(tf.keras.Model):
             temp.append(concatenate([Conv2DTranspose(n_filters*(2**j), (kernel_size, kernel_size), strides=(stride,stride), padding=pad),
                                      self.skip_connections[skip_connection]],
                                      axis=3))
+
+            skip_connection += 1
 
             #add conv layers to blocks
             for _ in range(n_layers):
@@ -125,7 +128,7 @@ class OMREngineUNet(tf.keras.Model):
         for file in imgs:
             #convert image into array of desired shape (3 channels)
             index = imgs.index(file)
-            path = os.path.join(path1, file)
+            path = os.path.join(image_path, file)
             single_img = Image.open(path).convert('RGB')
             single_img = single_img.resize((i_h,i_w))
             single_img = np.reshape(single_img,(i_h,i_w,i_c)) 
@@ -133,7 +136,7 @@ class OMREngineUNet(tf.keras.Model):
             X[index] = single_img
                 
             single_mask_ind = masks[index]
-            path = os.path.join(path2, single_mask_ind)
+            path = os.path.join(mask_path, single_mask_ind)
             single_mask = Image.open(path)
             single_mask = single_mask.resize((m_h, m_w))
             single_mask = np.reshape(single_mask,(m_h,m_w,m_c)) 
