@@ -80,6 +80,9 @@ class OMREngineUNet(tf.keras.Model):
 
         self.final_conv = Conv2D(n_classes, 1, padding='same')
 
+        #initilise loss
+        self.loss_obj = tf.keras.losses.BinaryCrossEntropy(from_logits=True)
+
 
     def call(self,input):
         #apply encoder and decoder blocks
@@ -143,6 +146,16 @@ class OMREngineUNet(tf.keras.Model):
             single_mask = single_mask - 1 
             y[index] = single_mask
         return X,y
+    
+    def generator_loss(disc_generated_output, gen_output, target):
+        gan_loss = self.loss_obj(tf.ones_like(disc_generated_output), disc_generated_output)
+
+        # Mean absolute error
+        l1_loss = tf.reduce_mean(tf.abs(target - gen_output))
+
+        total_gen_loss = gan_loss + (LAMBDA * l1_loss)
+
+        return total_gen_loss, gan_loss, l1_loss
     
 if __name__ == "__main__":    
     pass

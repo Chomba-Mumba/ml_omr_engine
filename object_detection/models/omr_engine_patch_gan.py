@@ -43,7 +43,7 @@ class OMREnginePatchGan(tf.keras.Model):
         self.zero_pad1 = tf.keras.Layers.ZeroPadding2D()
 
         #add final layers for the model
-        self.pen_conv = Conv2D(n_filters,
+        self.pen_conv = Conv2D(n_filters*(2**n_blocks+2),
                     kernel_size,
                     activation=act_func,
                     padding='same',
@@ -57,19 +57,32 @@ class OMREnginePatchGan(tf.keras.Model):
 
         self.final_conv = Conv2D(n_classes, 1, padding='same', strides=1)
 
+        #initialise loss
+        self.loss_obj = tf.keras.losses.BinaryCrossEntropy(from_logits=True)
+
 
     def call(self,input):
-        #apply encoder and decoder blocks
-        for encoder in self.encoder_blocks:
-            input = encoder(input)
         
         for decoder in self.decoder_blocks:
             input = decoder(input)
 
         #apply final layers
+        input=self.zero_pad1(input)
         input = self.pen_conv(input)
 
+        input = self.leaky_relu(input)
+        input = self.zero_pad2(input)
+
         return self.final_conv(input)
+    
+    def loss(self, real_output, gen_output):
+        real_loss = self.loss_object(tf.ones_like(real_output), real_output)
+
+        generated_loss = self.loss_object(tf.zeros_like(gen_output), gen_output)
+
+        total_disc_loss = real_loss + generated_loss
+
+        return total_disc_loss
     
     def load_data(self, image_path, mask_path):
         #read the images folder like a list
