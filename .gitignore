@@ -1,4 +1,5 @@
 /*/venv
 /venv
 *.tfvars
+object_detection/data/output/
 !terraform.tfvars.example

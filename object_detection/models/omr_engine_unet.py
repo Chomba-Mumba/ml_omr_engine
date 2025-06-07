@@ -147,7 +147,7 @@ class OMREngineUNet(tf.keras.Model):
             y[index] = single_mask
         return X,y
     
-    def generator_loss(disc_generated_output, gen_output, target):
+    def generator_loss(self,disc_generated_output, gen_output, target):
         gan_loss = self.loss_obj(tf.ones_like(disc_generated_output), disc_generated_output)
 
         # Mean absolute error
