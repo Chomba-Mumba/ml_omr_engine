@@ -2,8 +2,7 @@ import tensorflow as tf
 import os
 
 class DataLoader:
-    def __init__(self, path, batch_size, buffer_size, height=256, width=256):
-        self.path = path
+    def __init__(self, batch_size, buffer_size, height=256, width=256):
         self.batch_size = batch_size
         self.buffer_size = buffer_size
         self.height = height
@@ -35,7 +34,7 @@ class DataLoader:
 
         #crop images
         stacked = tf.stack([src, tar],axis=0)
-        cropped = tf.random_crop(stacked,size=[2, self.height, self.width, 3])
+        cropped = tf.image.random_crop(stacked,size=[2, self.height, self.width, 3])
         src, tar = cropped[0], cropped[1]
 
         #mirror images
@@ -56,14 +55,11 @@ class DataLoader:
 
         return src_img, tar_img
 
-
-        #TODO - split data set, pre-process and test data loader
     def get_dataset(self, src_path, tar_path, split='train'):
         src_files = sorted([os.path.join(src_path,f) for f in os.listdir(src_path)])
         tar_files = sorted([os.path.join(tar_path,f) for f in os.listdir(tar_path)])
 
         dataset = tf.data.Dataset.from_tensor_slices((src_files,tar_files))
-        
         if split=="train":
             dataset = dataset.map(
                 lambda src, tar: self.load_and_preprocess(src, tar, augment=True),
@@ -77,4 +73,8 @@ class DataLoader:
         return dataset.batch(self.batch_size).prefetch(tf.data.AUTOTUNE)
 
 if __name__ == "__main__":
-    pass
+    loader = DataLoader(32,10)
+    src_path = "data/input"
+    tar_path = "data/target"
+    data = loader.get_dataset(src_path, tar_path)
+    print(data)
