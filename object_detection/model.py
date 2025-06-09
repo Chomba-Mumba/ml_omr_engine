@@ -9,7 +9,7 @@ from tensorflow.keras.layers import Conv2D, Conv2DTranspose, MaxPooling2D, Flatt
 
 class OMREnginePatchGan(tf.keras.Model):
     def __init__(self, n_blocks, p_size=(2,2), 
-                 dropout_prob=0.3, n_layers=2, n_filters=32, 
+                 dropout_prob=0.3, n_filters=32, 
                  kernel_size=3, act_func='relu', 
                  pad='same', stride=(2,2), n_classes=10):
         
@@ -22,39 +22,31 @@ class OMREnginePatchGan(tf.keras.Model):
 
         x = tf.keras.layers.concatenate([input,target])
 
-        #define decoder blocks
-        self.decoder_blocks = []
+        #define encoder blocks
+        self.encoder_blocks = []
 
         for j in range(1,n_blocks+1):
             block = []
 
-            #add conv layers to blocks
-            for _ in range(n_layers):
-                block.append(Conv2D(n_filters*(2**j), 
-                                   kernel_size,
-                                   strides=stride, 
-                                   activation=act_func,
-                                   padding=pad,
-                                   kernel_initializer=kernel_init, use_bias=False))
+            block.append(Conv2D(n_filters*(2**j), 
+                                kernel_size,
+                                strides=stride,
+                                padding=pad,
+                                kernel_initializer=kernel_init, use_bias=False))
+            
+            if j > 1:
+                block.append(tf.keras.layers.BatchNormalization())
 
-            self.decoder_blocks.append(keras.Sequential(block))
+            block.append(tf.keras.layers.LeakyReLU())
+            self.encoder_blocks.append(keras.Sequential(block))
         
-        #add zero padding
-        self.zero_pad1 = tf.keras.layers.ZeroPadding2D()
 
         #add final layers for the model
-        self.pen_conv = Conv2D(n_filters*(2**n_blocks+2),
-                    kernel_size,
-                    activation=act_func,
+        self.pen_conv = Conv2D(n_filters*(2**n_blocks+2), kernel_size, strides=1,
+                    kernel_initializer=kernel_init,
                     padding='same',
-                    kernel_initializer='he_normal')
+                    use_bias=False)
         
-        #add leaky relu
-        self.leaky_relu = tf.keras.layers.LeakyReLU()
-
-        #add zero padding
-        self.zero_pad2 = tf.keras.layers.ZeroPadding2D()
-
         self.final_conv = Conv2D(n_classes, 1, padding='same', strides=1)
 
         #initialise loss
@@ -63,15 +55,15 @@ class OMREnginePatchGan(tf.keras.Model):
 
     def call(self,input):
         
-        for decoder in self.decoder_blocks:
-            input = decoder(input)
+        for encoder in self.encoder_blocks:
+            input = encoder(input)
 
-        #apply final layers
-        input=self.zero_pad1(input)
+        input = tf.keras.layers.ZeroPadding2D()(input)
         input = self.pen_conv(input)
 
-        input = self.leaky_relu(input)
-        input = self.zero_pad2(input)
+        input = tf.keras.layers.BatchNormalization()(input)
+        input = tf.keras.layers.LeakyReLU()(input)
+        input = tf.keras.layers.ZeroPadding2D()(input)
 
         return self.final_conv(input)
     
@@ -216,7 +208,7 @@ if __name__ == "__main__":
     print("=============")
     test_data = tf.random.uniform((1, 128, 128, 1))
     out = unet(test_data)
-
+    print(f"output: {out}")
     print("=============")
 
     patchGan = OMREnginePatchGan(3)
