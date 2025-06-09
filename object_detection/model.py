@@ -173,6 +173,17 @@ class OMREngineUNet(tf.keras.Model):
         input = self.pen_conv(input)
 
         return self.final_conv(input)
+
+    def loss(self, disc_gen_out, gen_out, target, LAMBDA=100):
+        gan_loss = tf.keras.losses.BinaryCrossentropy(from_logits=True)(
+            tf.ones_like(disc_gen_out), disc_gen_out
+        )
+        #MAE
+        l1_loss = tf.reduce_mean(tf.abs(target-gen_out))
+
+        total_gen_loss = gan_loss + (LAMBDA * l1_loss)
+
+        return total_gen_loss, gan_loss, l1_loss
     
     def load_data(self, src_image, tar_image):
         #read the image as byte string
