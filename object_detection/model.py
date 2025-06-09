@@ -111,26 +111,21 @@ class OMREngineUNet(tf.keras.Model):
 
         #define encoder blocks
         self.encoder_blocks = []
+
+        initialiser = tf.random_normal_initializer(0., 0.02)
         
         for i in range(1,n_blocks+1):
             block = []
 
             block.append(Conv2D(n_filters*(2**i),
-                                kernel_size,
-                                strides=stride,
-                                activation=act_func,
-                                padding=pad,
-                                kernel_initializer=kernel_init))
+                                kernel_size, strides=stride, padding=pad,
+                                kernel_initializer=initialiser,
+                                use_bias=False))
+            #apply batchnorm after 1st block
+            if i > 1:
+                block.append(BatchNormalization())
 
-            block.append(BatchNormalization())
-
-            if dropout_prob > 0:
-                block.append(Dropout(dropout_prob))
-
-            
-            #add pooling to all encoder blocsk except last
-            if i!=n_blocks:
-                block.append(MaxPooling2D(pool_size=p_size))
+            block.append(tf.keras.layers.LeakyReLU())
             
             self.encoder_blocks.append(keras.Sequential(block))
 
@@ -140,13 +135,19 @@ class OMREngineUNet(tf.keras.Model):
         for j in range(n_blocks-1, 0, -1):
             block = []
             #merge transposer with corresponding encoder block
-            block.append(Conv2DTranspose(n_filters*(2**j), kernel_size, strides=stride, padding=pad))
+            block.append(Conv2DTranspose(n_filters*(2**j), kernel_size, strides=stride, 
+                                         padding=pad,
+                                         kernel_initializer=initialiser,
+                                         use_bias=False))
 
-            block.append(Conv2D(n_filters*(2**j), 
-                                kernel_size, 
-                                activation=act_func,
-                                padding=pad,
-                                kernel_initializer=kernel_init))
+            block.append(tf.keras.layers.BatchNormalization())
+
+            #apply dropout to first 3 layers
+            if j >= n_blocks-3:
+                block.append(tf.keras.layers.Dropout(dropout_prob))
+            
+            block.append(tf.keras.layers.ReLU())
+
             self.decoder_blocks.append(keras.Sequential(block))
 
         #add final layers for the model
