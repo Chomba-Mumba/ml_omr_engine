@@ -26,18 +26,18 @@ class OMREnginePatchGan(tf.keras.Model):
         self.decoder_blocks = []
 
         for j in range(1,n_blocks+1):
-            temp = []
+            block = []
 
             #add conv layers to blocks
             for _ in range(n_layers):
-                temp.append(Conv2D(n_filters*(2**j), 
+                block.append(Conv2D(n_filters*(2**j), 
                                    kernel_size,
                                    strides=stride, 
                                    activation=act_func,
                                    padding=pad,
                                    kernel_initializer=kernel_init, use_bias=False))
 
-            self.decoder_blocks.append(keras.Sequential(temp))
+            self.decoder_blocks.append(keras.Sequential(block))
         
         #add zero padding
         self.zero_pad1 = tf.keras.layers.ZeroPadding2D()
@@ -103,8 +103,8 @@ class OMREnginePatchGan(tf.keras.Model):
 
 class OMREngineUNet(tf.keras.Model):
     def __init__(self, n_blocks, p_size=(2,2), 
-                 dropout_prob=0.3, n_layers=2, n_filters=32, 
-                 kernel_size=3, act_func='relu', kernel_init='HeNormal', 
+                 dropout_prob=0.3, n_filters=32, 
+                 kernel_size=4, act_func='relu', kernel_init='HeNormal', 
                  pad='same', stride=2, n_classes=10):
         
         super(OMREngineUNet, self).__init__()
@@ -113,45 +113,42 @@ class OMREngineUNet(tf.keras.Model):
         self.encoder_blocks = []
         
         for i in range(1,n_blocks+1):
-            temp = []
+            block = []
 
-            #add conv layers to blocks
-            for _ in range(n_layers):
-                temp.append(Conv2D(n_filters*(2**i),
-                                   kernel_size,
-                                   strides=stride,
-                                   activation=act_func,
-                                   padding=pad,
-                                   kernel_initializer=kernel_init))
+            block.append(Conv2D(n_filters*(2**i),
+                                kernel_size,
+                                strides=stride,
+                                activation=act_func,
+                                padding=pad,
+                                kernel_initializer=kernel_init))
 
-            temp.append(BatchNormalization())
+            block.append(BatchNormalization())
 
             if dropout_prob > 0:
-                temp.append(Dropout(dropout_prob))
+                block.append(Dropout(dropout_prob))
 
             
             #add pooling to all encoder blocsk except last
             if i!=n_blocks:
-                temp.append(MaxPooling2D(pool_size=p_size))
+                block.append(MaxPooling2D(pool_size=p_size))
             
-            self.encoder_blocks.append(keras.Sequential(temp))
+            self.encoder_blocks.append(keras.Sequential(block))
 
         #define decoder blocks
         self.decoder_blocks = []
 
-        for j in range(n_blocks-1,-1,-1):
-
+        for j in range(n_blocks-1, 0, -1):
+            block = []
             #merge transposer with corresponding encoder block
-            Conv2DTranspose(n_filters*(2**j), (kernel_size, kernel_size), strides=(stride,stride), padding=pad)
+            block.append(Conv2DTranspose(n_filters*(2**j), kernel_size, strides=stride, padding=pad))
 
-            #add conv layers to blocks
-            for _ in range(n_layers):
-                self.decoder_blocks.append(Conv2D(n_filters*(2**j), 
-                                   kernel_size, 
-                                   activation=act_func,
-                                   padding=pad,
-                                   kernel_initializer=kernel_init))
-        
+            block.append(Conv2D(n_filters*(2**j), 
+                                kernel_size, 
+                                activation=act_func,
+                                padding=pad,
+                                kernel_initializer=kernel_init))
+            self.decoder_blocks.append(keras.Sequential(block))
+
         #add final layers for the model
         self.pen_conv = Conv2D(n_filters,
                     kernel_size,
@@ -170,6 +167,7 @@ class OMREngineUNet(tf.keras.Model):
         skip_conns = []
         for encoder in self.encoder_blocks:
             input = encoder(input)
+            print(f"input shape:{input.shape}")
             skip_conns.append(input)
 
         skip_conns= reversed(skip_conns[:-1])
@@ -215,7 +213,7 @@ if __name__ == "__main__":
     unet.summary()
 
     print("=============")
-    test_data = tf.random.uniform((1, 28, 28, 1))
+    test_data = tf.random.uniform((1, 128, 128, 1))
     out = unet(test_data)
 
     print("=============")
