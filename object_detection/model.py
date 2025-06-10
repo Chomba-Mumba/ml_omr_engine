@@ -15,6 +15,8 @@ class OMREnginePatchGan(tf.keras.Model):
         
         super(OMREnginePatchGan, self).__init__()
 
+        self.optimiser = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+
         kernel_init = tf.random_normal_initializer(0.,0.02)
 
         input = tf.keras.layers.Input(shape=[256,256,3], name="input_image")
@@ -101,6 +103,8 @@ class OMREngineUNet(tf.keras.Model):
         
         super(OMREngineUNet, self).__init__()
 
+        self.optimiser = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+
         #define encoder blocks
         self.encoder_blocks = []
 
@@ -185,24 +189,24 @@ class OMREngineUNet(tf.keras.Model):
 
         return total_gen_loss, gan_loss, l1_loss
     
-    def load_data(self, src_image, tar_image):
+    def load_data(self, input_image, target_image):
         #read the image as byte string
-        src_image = tf.io.read_file(src_image)
-        src_image  = tf.io.decode_jpeg(src_image) #convert byte string to tensor
+        input_image = tf.io.read_file(input_image)
+        input_image  = tf.io.decode_jpeg(input_image) #convert byte string to tensor
 
-        tar_image = tf.io.read_file(tar_image)
-        tar_image  = tf.io.decode_jpeg(tar_image) 
+        target_image = tf.io.read_file(target_image)
+        target_image  = tf.io.decode_jpeg(target_image) 
 
         #convert to float32 tensors
-        src_image = tf.cast(src_image, tf.float32)
-        tar_image = tf.cast(tar_image, tf.float32)
+        input_image = tf.cast(input_image, tf.float32)
+        target_image = tf.cast(target_image, tf.float32)
         
-        return src_image, tar_image
+        return input_image, target_image
 
-    def pre_process(self, src_image, tar_image):
+    def pre_process(self, input_image, target_image):
         pass
     
-    def generator_loss(self,disc_generated_output, gen_output, target):
+    def generator_loss(self,disc_generated_output, gen_output, target, LAMBDA=100):
         gan_loss = self.loss_obj(tf.ones_like(disc_generated_output), disc_generated_output)
 
         # Mean absolute error
@@ -211,6 +215,14 @@ class OMREngineUNet(tf.keras.Model):
         total_gen_loss = gan_loss + (LAMBDA * l1_loss)
 
         return total_gen_loss, gan_loss, l1_loss
+
+    def generate_images(input, target):
+        prediction = self(input, training=True)
+
+        display_list = [input[0], target[0], prediction[0]]
+
+        for i in range(3):
+            print(display_list[i] * 0.5 + 0.5)
     
 if __name__ == "__main__":
     unet = OMREngineUNet(3)
