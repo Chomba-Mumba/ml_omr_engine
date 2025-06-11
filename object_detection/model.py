@@ -14,9 +14,6 @@ class OMREnginePatchGan(tf.keras.Model):
                  pad='same', stride=(2,2), n_classes=10):
         
         super(OMREnginePatchGan, self).__init__()
-
-        self.optimiser = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
-
         kernel_init = tf.random_normal_initializer(0.,0.02)
 
         input = tf.keras.layers.Input(shape=[256,256,3], name="input_image")
@@ -77,6 +74,19 @@ class OMREnginePatchGan(tf.keras.Model):
         total_disc_loss = real_loss + generated_loss
 
         return total_disc_loss
+    def save_checkpoint(self,generator_optimiser, discriminator_optimiser, generator, time):
+        #checkpoint
+        checkpoint_dir="./checkpoints"
+        checkpoint_prefix = os.path.join(checkpoint_dir,"chkpt")
+
+        self.checkpoint=tf.train.Checkpoint(
+            generator_optimizer = generator_optimiser,
+            discriminator_otpmiser = discriminator_optimiser,
+            generator = generator,
+            discriminator=self)
+
+        self.checkpoint.save(file_prefix=checkpoint_prefix)
+        print(f"Checkpoint saved at: {time}")
     
     def load_data(self, image_path, mask_path):
         #read the images folder like a list
@@ -102,8 +112,6 @@ class OMREngineUNet(tf.keras.Model):
                  pad='same', stride=2, n_classes=10):
         
         super(OMREngineUNet, self).__init__()
-
-        self.optimiser = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
 
         #define encoder blocks
         self.encoder_blocks = []

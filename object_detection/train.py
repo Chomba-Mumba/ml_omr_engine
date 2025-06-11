@@ -16,6 +16,8 @@ summary_writer = tf.summary.create_file_writer(
 
 discriminator, generator = OMREnginePatchGan(3), OMREngineUNet(3)
 
+generator_optimser = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+discriminator_optimiser = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
 
 @tf.function
 def train_step(input_image, target, step):
@@ -46,10 +48,24 @@ def train_step(input_image, target, step):
 
 def fit(train_ds, test_ds, steps):
     example_input, example_target = next(iter(test_ds.take(1)))
-    
+    start = time.time()
+
     for step, (input_image, target) in train_ds.repeat().take(steps).enumerate():
         if (step) % 1000 == 0:
-            display.clear_output(wait=True)
+            print()
 
             if step!=0:
                 print(f"Time taken for 1000 steps:{time.time()-start:.2f}sec \n")
+            start = time.time()
+
+            generator.generate_images(example_input, example_target)
+            print(f"Step: {step//1000}k")
+        train_step(input_image, target, step)
+
+        #training step
+        if (step + 1) % 10 == 0:
+            print('.',end='',flush=True)
+        
+        #save checkpoint every 5000 steps
+        if (step + 1) % 5000 == 0:
+            discriminator.save_checkpoint(generator_optimser,discriminator_optimiser,generator, f"{time.time()-start:.2f}sec \n" )
