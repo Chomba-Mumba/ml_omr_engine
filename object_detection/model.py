@@ -3,15 +3,15 @@ import numpy as np
 import os
 import keras
 
+from data_loader import DataLoader
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, Conv2DTranspose, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization, concatenate
 
 class OMREnginePatchGan(tf.keras.Model):
-    def __init__(self, n_blocks, p_size=(2,2), 
-                 dropout_prob=0.3, n_filters=32, 
-                 kernel_size=3, act_func='relu', 
-                 pad='same', stride=(2,2), n_classes=10):
+    def __init__(self, n_blocks, n_filters=32, 
+                 kernel_size=3, pad='same', 
+                 stride=(2,2), n_classes=10):
         
         super(OMREnginePatchGan, self).__init__()
         kernel_init = tf.random_normal_initializer(0.,0.02)
@@ -88,27 +88,10 @@ class OMREnginePatchGan(tf.keras.Model):
         self.checkpoint.save(file_prefix=checkpoint_prefix)
         print(f"Checkpoint saved at: {time}")
     
-    def load_data(self, image_path, mask_path):
-        #read the images folder like a list
-        images = os.listdir(image_path)
-        masks = os.listdir(mask_path)
-
-        orig_imgs = []
-        mask_imgs = []
-        for file in images:
-            orig_imgs.append(file)
-        for file in masks:
-            mask_imgs.append(file)
-
-        orig_imgs.sort()
-        mask_imgs.sort()
-    
-        return orig_imgs, mask_imgs
 
 class OMREngineUNet(tf.keras.Model):
-    def __init__(self, n_blocks, p_size=(2,2), 
-                 dropout_prob=0.3, n_filters=32, 
-                 kernel_size=4, act_func='relu', kernel_init='HeNormal', 
+    def __init__(self, n_blocks, dropout_prob=0.3, n_filters=32, 
+                 kernel_size=4, act_func='relu',
                  pad='same', stride=2, n_classes=10):
         
         super(OMREngineUNet, self).__init__()
@@ -197,33 +180,6 @@ class OMREngineUNet(tf.keras.Model):
 
         return total_gen_loss, gan_loss, l1_loss
     
-    def load_data(self, input_image, target_image):
-        #read the image as byte string
-        input_image = tf.io.read_file(input_image)
-        input_image  = tf.io.decode_jpeg(input_image) #convert byte string to tensor
-
-        target_image = tf.io.read_file(target_image)
-        target_image  = tf.io.decode_jpeg(target_image) 
-
-        #convert to float32 tensors
-        input_image = tf.cast(input_image, tf.float32)
-        target_image = tf.cast(target_image, tf.float32)
-        
-        return input_image, target_image
-
-    def pre_process(self, input_image, target_image):
-        pass
-    
-    def generator_loss(self,disc_generated_output, gen_output, target, LAMBDA=100):
-        gan_loss = self.loss_obj(tf.ones_like(disc_generated_output), disc_generated_output)
-
-        # Mean absolute error
-        l1_loss = tf.reduce_mean(tf.abs(target - gen_output))
-
-        total_gen_loss = gan_loss + (LAMBDA * l1_loss)
-
-        return total_gen_loss, gan_loss, l1_loss
-
     def generate_images(input, target):
         prediction = self(input, training=True)
 

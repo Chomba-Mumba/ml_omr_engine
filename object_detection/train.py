@@ -7,12 +7,20 @@ import datetime
 import time
 
 from model import OMREnginePatchGan, OMREngineUNet
+from data_loader import DataLoader
 
 log_dir="logs/"
 
 summary_writer = tf.summary.create_file_writer(
     log_dir + "fit/" + datetime.datetime.nmow().strftime("%Y%m%d-%H%M%S")
 )
+
+loader = DataLoader(3,10)
+
+src_path = "data/input"
+tar_path = "data/target"
+
+data = loader.get_dataset(src_path, tar_path)
 
 discriminator, generator = OMREnginePatchGan(3), OMREngineUNet(3)
 
@@ -22,6 +30,7 @@ discriminator_optimiser = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
 @tf.function
 def train_step(input_image, target, step):
     with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
+        #generate image and analyse discriminator 
         gen_output = generator(input_image, training=True)
 
         disc_real_output = discriminator([input_image, target], training=True)
@@ -68,4 +77,4 @@ def fit(train_ds, test_ds, steps):
         
         #save checkpoint every 5000 steps
         if (step + 1) % 5000 == 0:
-            discriminator.save_checkpoint(generator_optimser,discriminator_optimiser,generator, f"{time.time()-start:.2f}sec \n" )
+            discriminator.save_checkpoint(generator_optimser, discriminator_optimiser,  generator, f"{time.time()-start:.2f}sec \n" )
