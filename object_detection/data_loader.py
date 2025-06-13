@@ -59,7 +59,7 @@ class DataLoader:
         src_files = sorted([os.path.join(src_path,f) for f in os.listdir(src_path)])
         tar_files = sorted([os.path.join(tar_path,f) for f in os.listdir(tar_path)])
 
-        dataset = tf.data.Dataset.from_tensor_slices((src_files,tar_files))
+        dataset = tf.data.Dataset.from_tensor_slices((src_files,tar_files), validation_split=0.2)
         if split=="train":
             dataset = dataset.map(
                 lambda src, tar: self.load_and_preprocess(src, tar, augment=True),
