@@ -54,22 +54,32 @@ class DataLoader:
         src_img, tar_img = self.normalise(src_img, tar_img)
 
         return src_img, tar_img
+    
+    def split(self, dataset, train_size=0.7, test_size=0.15, val_size=0.15):
+        dataset.shuffle()
+
+        dataset_size = dataset.cardinality().numpy()
+
+        train_size = train_size * dataset_size 
+        test_size = test_size * dataset_size 
+        val_size = val_size * dataset_size 
+
+        train_ds = dataset.take(train_size * dataset_size )
+        test_ds = dataset.skip(train_size)
+        val_ds = test_ds.skip(val_size)
+        test_ds= test_ds.take(test_size)
+
+        return train_ds, test_ds, val_ds
 
     def get_dataset(self, src_path, tar_path, split='train'):
         src_files = sorted([os.path.join(src_path,f) for f in os.listdir(src_path)])
         tar_files = sorted([os.path.join(tar_path,f) for f in os.listdir(tar_path)])
 
-        dataset = tf.data.Dataset.from_tensor_slices((src_files,tar_files), validation_split=0.2)
-        if split=="train":
-            dataset = dataset.map(
-                lambda src, tar: self.load_and_preprocess(src, tar, augment=True),
-                num_parallel_calls=tf.data.AUTOTUNE
-            )
-        else:
-            dataset = dataset.map(
-                lambda src, tar: self.load_and_preprocess(src,tar, augment=False),
-                num_parallel_calls=tf.data.AUTOTUNE
-            )
+        dataset = tf.data.Dataset.from_tensor_slices((src_files,tar_files))
+        dataset = dataset.map(
+            lambda src, tar: self.load_and_preprocess(src, tar, augment=True),
+            num_parallel_calls=tf.data.AUTOTUNE
+        )
         return dataset.batch(self.batch_size).prefetch(tf.data.AUTOTUNE)
 
 if __name__ == "__main__":
@@ -79,6 +89,7 @@ if __name__ == "__main__":
     tar_path = "data/target"
 
     data = loader.get_dataset(src_path, tar_path)
+    print(f"data specs:{data.element_spec}")
 
     # preview tensors
     print(f"data as iter: {list(data.as_numpy_iterator())}")
