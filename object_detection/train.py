@@ -12,15 +12,16 @@ from data_loader import DataLoader
 log_dir="logs/"
 
 summary_writer = tf.summary.create_file_writer(
-    log_dir + "fit/" + datetime.datetime.nmow().strftime("%Y%m%d-%H%M%S")
+    log_dir + "fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 )
 
-loader = DataLoader(3,10)
+loader = DataLoader(1,2)
 
 src_path = "data/input"
 tar_path = "data/target"
 
 data = loader.get_dataset(src_path, tar_path)
+train_ds, test_ds, val_ds = loader.split(data)
 
 discriminator, generator = OMREnginePatchGan(3), OMREngineUNet(3)
 
@@ -33,7 +34,7 @@ def train_step(input_image, target, step):
         #generate image and analyse discriminator 
         gen_output = generator(input_image, training=True)
 
-        disc_real_output = discriminator([input_image, target], training=True)
+        disc_real_output = discriminator([input_image, target], training=True) #TODO - make 1 input tensor
         disc_generated_output = discriminator([input_image, gen_output], training=True)
 
         gen_total_loss, gen_gan_loss, gen_l1_loss = generator.loss(disc_generated_output, gen_output, target)
@@ -59,10 +60,8 @@ def fit(train_ds, test_ds, steps):
     example_input, example_target = next(iter(test_ds.take(1)))
     start = time.time()
 
-    for step, (input_image, target) in train_ds.repeat().take(steps).enumerate():
+    for step, (input_image, target) in enumerate(train_ds.repeat().take(steps)):
         if (step) % 1000 == 0:
-            print()
-
             if step!=0:
                 print(f"Time taken for 1000 steps:{time.time()-start:.2f}sec \n")
             start = time.time()
@@ -78,3 +77,4 @@ def fit(train_ds, test_ds, steps):
         #save checkpoint every 5000 steps
         if (step + 1) % 5000 == 0:
             discriminator.save_checkpoint(generator_optimser, discriminator_optimiser,  generator, f"{time.time()-start:.2f}sec \n" )
+fit(train_ds, test_ds, 10)

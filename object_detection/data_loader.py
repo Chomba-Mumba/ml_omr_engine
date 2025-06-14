@@ -56,7 +56,7 @@ class DataLoader:
         return src_img, tar_img
     
     def split(self, dataset, train_size=0.7, test_size=0.15, val_size=0.15):
-        dataset.shuffle()
+        dataset.shuffle(self.buffer_size)
 
         dataset_size = dataset.cardinality().numpy()
 
@@ -64,14 +64,14 @@ class DataLoader:
         test_size = test_size * dataset_size 
         val_size = val_size * dataset_size 
 
-        train_ds = dataset.take(train_size * dataset_size )
+        train_ds = dataset.take(train_size)
         test_ds = dataset.skip(train_size)
         val_ds = test_ds.skip(val_size)
-        test_ds= test_ds.take(test_size)
+        test_ds = test_ds.take(test_size)
 
         return train_ds, test_ds, val_ds
 
-    def get_dataset(self, src_path, tar_path, split='train'):
+    def get_dataset(self, src_path, tar_path):
         src_files = sorted([os.path.join(src_path,f) for f in os.listdir(src_path)])
         tar_files = sorted([os.path.join(tar_path,f) for f in os.listdir(tar_path)])
 

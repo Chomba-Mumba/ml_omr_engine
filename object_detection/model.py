@@ -27,13 +27,16 @@ class OMREnginePatchGan(tf.keras.Model):
         for j in range(1,n_blocks+1):
             block = []
 
-            block.append(Conv2D(n_filters*(2**j), 
-                                kernel_size,
-                                strides=stride,
-                                padding=pad,
-                                kernel_initializer=kernel_init, use_bias=False))
-            
-            if j > 1:
+            if j == 1:
+                block.append(Conv2D(n_filters*(2**j), 
+                                kernel_size, strides=stride,
+                                padding=pad, kernel_initializer=kernel_init, use_bias=False))
+                block.append(x)
+            else:
+                block.append(Conv2D(n_filters*(2**j), 
+                                kernel_size, strides=stride,
+                                padding=pad, kernel_initializer=kernel_init, use_bias=False))
+                
                 block.append(tf.keras.layers.BatchNormalization())
 
             block.append(tf.keras.layers.LeakyReLU())
@@ -180,7 +183,7 @@ class OMREngineUNet(tf.keras.Model):
 
         return total_gen_loss, gan_loss, l1_loss
     
-    def generate_images(input, target):
+    def generate_images(self, input, target):
         prediction = self(input, training=True)
 
         display_list = [input[0], target[0], prediction[0]]
