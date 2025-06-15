@@ -16,31 +16,24 @@ class OMREnginePatchGan(tf.keras.Model):
         super(OMREnginePatchGan, self).__init__()
         kernel_init = tf.random_normal_initializer(0.,0.02)
 
-        input = tf.keras.layers.Input(shape=[256,256,3], name="input_image")
-        target = tf.keras.layers.Input(shape=[256,256,3], name="target_image")
-
-        x = tf.keras.layers.concatenate([input,target])
-
         #define encoder blocks
-        self.encoder_blocks = []
+        self.encoder_block = []
 
         for j in range(1,n_blocks+1):
             block = []
 
             if j == 1:
-                block.append(Conv2D(n_filters*(2**j), 
+                self.encoder_block.append(Conv2D(n_filters*(2**j), 
                                 kernel_size, strides=stride,
                                 padding=pad, kernel_initializer=kernel_init, use_bias=False))
-                block.append(x)
             else:
-                block.append(Conv2D(n_filters*(2**j), 
+                self.encoder_block.append(Conv2D(n_filters*(2**j), 
                                 kernel_size, strides=stride,
                                 padding=pad, kernel_initializer=kernel_init, use_bias=False))
                 
-                block.append(tf.keras.layers.BatchNormalization())
+                self.encoder_block.append(tf.keras.layers.BatchNormalization())
 
-            block.append(tf.keras.layers.LeakyReLU())
-            self.encoder_blocks.append(keras.Sequential(block))
+            self.encoder_block.append(tf.keras.layers.LeakyReLU())
         
 
         #add final layers for the model
@@ -55,9 +48,10 @@ class OMREnginePatchGan(tf.keras.Model):
         self.loss_obj = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
 
-    def call(self,input):
-        
-        for encoder in self.encoder_blocks:
+    def call(self,inputs):
+        inp, tar = inputs
+        input = tf.keras.layers.concatenate([inp,tar],axis=-1)
+        for encoder in self.encoder_block:
             input = encoder(input)
 
         input = tf.keras.layers.ZeroPadding2D()(input)
@@ -95,7 +89,7 @@ class OMREnginePatchGan(tf.keras.Model):
 class OMREngineUNet(tf.keras.Model):
     def __init__(self, n_blocks, dropout_prob=0.3, n_filters=32, 
                  kernel_size=4, act_func='relu',
-                 pad='same', stride=2, n_classes=10):
+                 pad='same', stride=2, n_classes=3):
         
         super(OMREngineUNet, self).__init__()
 
@@ -122,7 +116,7 @@ class OMREngineUNet(tf.keras.Model):
         #define decoder blocks
         self.decoder_blocks = []
 
-        for j in range(n_blocks-1, 0, -1):
+        for j in range(n_blocks-1, -1, -1):
             block = []
             #merge transposer with corresponding encoder block
             block.append(Conv2DTranspose(n_filters*(2**j), kernel_size, strides=stride, 
@@ -147,6 +141,8 @@ class OMREngineUNet(tf.keras.Model):
                     padding='same',
                     kernel_initializer='he_normal')
 
+        self.upsampling = tf.keras.layers.UpSampling2D(size=(2, 2), interpolation='bilinear')
+
         self.final_conv = Conv2D(n_classes, 1, padding='same')
 
         #initilise loss
@@ -169,6 +165,8 @@ class OMREngineUNet(tf.keras.Model):
             
         #apply final layers
         input = self.pen_conv(input)
+
+        input = self.upsampling(input)
 
         return self.final_conv(input)
 
