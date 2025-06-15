@@ -16,6 +16,9 @@ class OMREnginePatchGan(tf.keras.Model):
         super(OMREnginePatchGan, self).__init__()
         kernel_init = tf.random_normal_initializer(0.,0.02)
 
+        self.optimiser = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+        self.loss_obj = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+
         #define encoder blocks
         self.encoder_block = []
 
@@ -35,7 +38,10 @@ class OMREnginePatchGan(tf.keras.Model):
 
             self.encoder_block.append(tf.keras.layers.LeakyReLU())
         
-
+        self.zero_pad1 = tf.keras.layers.ZeroPadding2D()
+        self.batch_norm = tf.keras.layers.BatchNormalization()
+        self.leaky_relu = tf.keras.layers.LeakyReLU()
+        self.zero_pad2 = tf.keras.layers.ZeroPadding2D()
         #add final layers for the model
         self.pen_conv = Conv2D(n_filters*(2**n_blocks+2), kernel_size, strides=1,
                     kernel_initializer=kernel_init,
@@ -44,37 +50,33 @@ class OMREnginePatchGan(tf.keras.Model):
         
         self.final_conv = Conv2D(n_classes, 1, padding='same', strides=1)
 
-        #initialise loss
-        self.loss_obj = tf.keras.losses.BinaryCrossentropy(from_logits=True)
-
-
     def call(self,inputs):
         inp, tar = inputs
         input = tf.keras.layers.concatenate([inp,tar],axis=-1)
         for encoder in self.encoder_block:
             input = encoder(input)
 
-        input = tf.keras.layers.ZeroPadding2D()(input)
+        input = self.zero_pad1(input)
         input = self.pen_conv(input)
 
-        input = tf.keras.layers.BatchNormalization()(input)
-        input = tf.keras.layers.LeakyReLU()(input)
-        input = tf.keras.layers.ZeroPadding2D()(input)
+        input = self.batch_norm(input)
+        input = self.leaky_relu(input)
+        input = self.zero_pad2(input)
 
         return self.final_conv(input)
     
-    def loss(self, real_output, gen_output):
-        real_loss = self.loss_object(tf.ones_like(real_output), real_output)
+    def discriminator_loss(self, real_output, gen_output):
+        real_loss = self.loss_obj(tf.ones_like(real_output), real_output)
 
-        generated_loss = self.loss_object(tf.zeros_like(gen_output), gen_output)
+        generated_loss = self.loss_obj(tf.zeros_like(gen_output), gen_output)
 
         total_disc_loss = real_loss + generated_loss
 
         return total_disc_loss
     def save_checkpoint(self,generator_optimiser, discriminator_optimiser, generator, time):
         #checkpoint
-        checkpoint_dir="./checkpoints"
-        checkpoint_prefix = os.path.join(checkpoint_dir,"chkpt")
+        self.checkpoint_dir="./checkpoints"
+        checkpoint_prefix = os.path.join(self.checkpoint_dir,"chkpt")
 
         self.checkpoint=tf.train.Checkpoint(
             generator_optimizer = generator_optimiser,
@@ -92,6 +94,10 @@ class OMREngineUNet(tf.keras.Model):
                  pad='same', stride=2, n_classes=3):
         
         super(OMREngineUNet, self).__init__()
+        
+        self.optimiser = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+        self.loss_obj = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+
 
         #define encoder blocks
         self.encoder_blocks = []
@@ -145,9 +151,6 @@ class OMREngineUNet(tf.keras.Model):
 
         self.final_conv = Conv2D(n_classes, 1, padding='same')
 
-        #initilise loss
-        self.loss_obj = tf.keras.losses.BinaryCrossentropy(from_logits=True)
-
 
     def call(self,input):
         #apply encoder and decoder blocks
@@ -170,7 +173,7 @@ class OMREngineUNet(tf.keras.Model):
 
         return self.final_conv(input)
 
-    def loss(self, disc_gen_out, gen_out, target, LAMBDA=100):
+    def generator_loss(self, disc_gen_out, gen_out, target, LAMBDA=100):
         gan_loss = tf.keras.losses.BinaryCrossentropy(from_logits=True)(
             tf.ones_like(disc_gen_out), disc_gen_out
         )

@@ -2,7 +2,7 @@ import tensorflow as tf
 import os
 
 class DataLoader:
-    def __init__(self, batch_size, buffer_size, height=1024, width=1024):
+    def __init__(self, batch_size, buffer_size, height=512, width=512):
         self.batch_size = batch_size
         self.buffer_size = buffer_size
         self.height = height
@@ -16,7 +16,8 @@ class DataLoader:
 
         #resize
         src_img, tar_img = self.resize(src_img, tar_img, self.height, self.width)
-        print(src_img.shape)
+        print(f"src_img shape: {src_img.shape}")
+        print(f"tar_img shape: {tar_img.shape}")
         
         return src_img, tar_img
     

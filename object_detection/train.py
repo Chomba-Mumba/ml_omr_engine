@@ -25,9 +25,6 @@ train_ds, test_ds, val_ds = loader.split(data)
 
 discriminator, generator = OMREnginePatchGan(3), OMREngineUNet(3)
 
-generator_optimser = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
-discriminator_optimiser = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
-
 @tf.function
 def train_step(input_image, target, step):
     with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
@@ -39,8 +36,8 @@ def train_step(input_image, target, step):
         print("Discriminating generated output...")
         disc_generated_output = discriminator([input_image, gen_output], training=True)
 
-        gen_total_loss, gen_gan_loss, gen_l1_loss = generator.loss(disc_generated_output, gen_output, target)
-        disc_loss = discriminator.loss(disc_real_output, disc_generated_output)
+        gen_total_loss, gen_gan_loss, gen_l1_loss = generator.generator_loss(disc_generated_output, gen_output, target)
+        disc_loss = discriminator.discriminator_loss(disc_real_output, disc_generated_output)
 
         generator_gradients = gen_tape.gradient(gen_total_loss,
                                                 generator.trainable_variables)
@@ -75,6 +72,9 @@ def fit(train_ds, test_ds, steps):
             print('.',end='',flush=True)
         
         #save checkpoint every 5000 steps
-        if (step + 1) % 5000 == 0:
-            discriminator.save_checkpoint(generator_optimser, discriminator_optimiser,  generator, f"{time.time()-start:.2f}sec \n" )
-fit(train_ds, test_ds, 10)
+        if (step + 1) % 2 == 0:
+            discriminator.save_checkpoint(generator.optimiser, discriminator.optimiser,  generator, f"{time.time()-start:.2f}sec \n" )
+fit(train_ds, test_ds, 4)
+
+for inp, tar in test_ds:
+    generator.generate_images(inp, tar)
