@@ -1,0 +1,20 @@
+__pycache__/
+*.pyc
+*.pyo
+
+venv/
+.env/
+
+checkpoints/
+logs/
+*.log
+
+data/
+
+.DS_Store
+.vscode/
+.idea/
+
+Dockerfile
+dockerfile  # in case lowercase is used
+.dockerignore

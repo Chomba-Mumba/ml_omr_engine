@@ -1,0 +1,10 @@
+FROM 763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-inference:2.4-cpu-py311-ec2
+
+COPY ..
+
+#install non tensorflow dependencies
+RUN pip install -r requirements.txt
+
+RUN git clone https://github.com/aws-samples/deep-learning-models
+
+CMD ["python", "train.py"]
