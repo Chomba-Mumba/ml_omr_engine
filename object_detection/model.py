@@ -73,19 +73,6 @@ class OMREnginePatchGan(tf.keras.Model):
         total_disc_loss = real_loss + generated_loss
 
         return total_disc_loss
-    def save_checkpoint(self,generator_optimiser, discriminator_optimiser, generator, time):
-        #checkpoint
-        self.checkpoint_dir="./checkpoints"
-        checkpoint_prefix = os.path.join(self.checkpoint_dir,"chkpt")
-
-        self.checkpoint=tf.train.Checkpoint(
-            generator_optimizer = generator_optimiser,
-            discriminator_otpmiser = discriminator_optimiser,
-            generator = generator,
-            discriminator=self)
-
-        self.checkpoint.save(file_prefix=checkpoint_prefix)
-        print(f"Checkpoint saved at: {time}")
     
 
 class OMREngineUNet(tf.keras.Model):
@@ -184,8 +171,24 @@ class OMREngineUNet(tf.keras.Model):
 
         return total_gen_loss, gan_loss, l1_loss
     
+    def save_checkpoint(self,generator_optimiser, discriminator_optimiser, generator, time):
+        #checkpoint
+        self.checkpoint_dir="./checkpoints"
+        checkpoint_prefix = os.path.join(self.checkpoint_dir,"chkpt")
+
+        self.checkpoint=tf.train.Checkpoint(
+            generator_optimizer = generator_optimiser,
+            discriminator_otpmiser = discriminator_optimiser,
+            generator = generator,
+            discriminator=self)
+
+        self.checkpoint.save(file_prefix=checkpoint_prefix)
+        print(f"Checkpoint saved at: {time}")
+    def load_checkpoint(self):
+        pass
     def generate_images(self, input, target):
         prediction = self(input, training=True)
+        print("generating images")
 
         display_list = [input[0], target[0], prediction[0]]
 
