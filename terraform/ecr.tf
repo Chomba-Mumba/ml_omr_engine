@@ -5,6 +5,10 @@ resource "aws_ecr_repository" "ml_ecr_repo"{
     image_scanning_configuration {
         scan_on_push = true
     }
+
+    encryption_configuration {
+      encryption_type = "KMS"
+    }
 }
 
 resource "null_resource" "build_push_dkr_img" {
@@ -16,7 +20,7 @@ resource "null_resource" "build_push_dkr_img" {
     }
 }
 
-resource "aws_ecr_lifecycle_policy" "ml_ecr_policy" {
+resource "aws_ecr_lifecycle_policy" "ml_ecr_lifecycle_policy" {
   repository = aws_ecr_repository.ml_ecr_repo.name
 
   policy = jsonencode({
@@ -36,4 +40,16 @@ resource "aws_ecr_lifecycle_policy" "ml_ecr_policy" {
       }
     ]
   })
+}
+
+resource "aws_ecr_registry_scanning_configuration" "scan_configuration" {
+  scan_type = "ENHANCED"
+
+  rule {
+    scan_frequency = "CONTINOUS_SCAN"
+    repository_filter {
+      filter = "*"
+      filter_type = "WILDCARD"
+    }
+  }
 }

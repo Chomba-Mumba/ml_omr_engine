@@ -21,3 +21,8 @@ variable "force_image_rebuild" {
     type = bool
     default =  false
 }
+
+variable "aws_acc_id" {
+    type = string
+    sensitive = true
+}
