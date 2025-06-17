@@ -7,6 +7,6 @@ for dir in ./* do
     for file in ./* do
         if [ "${file}" = "dockerfile" ] then
             docker build -t "${directory}:latest" .
-            docker push "${ECR_URL}"
+            docker push "${ECR_REPOSITORY}"
         fi
 done

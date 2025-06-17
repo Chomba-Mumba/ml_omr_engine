@@ -13,7 +13,7 @@ resource "aws_ecr_repository" "ml_ecr_repo"{
 
 resource "null_resource" "build_push_dkr_img" {
     triggers  {
-        detect_docker_source_changes = var.force_iamge_rebuild == true ? timestamp()
+        detect_docker_source_changes = var.force_image_rebuild == true ? timestamp()
     }
     provisioner "local_exec"{
         command = local.dkr_build_cmd

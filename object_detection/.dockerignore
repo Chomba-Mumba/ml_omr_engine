@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 *.pyo
+preprocess.py
 
 venv/
 .env/
