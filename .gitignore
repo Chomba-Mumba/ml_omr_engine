@@ -20,3 +20,5 @@ chkpt*
 */__pycache__/*
 
 */checkpoints/*
+
+*/assets/*
