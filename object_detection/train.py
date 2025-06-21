@@ -73,7 +73,7 @@ def fit(train_ds, test_ds, steps):
         
         #save checkpoint every 5000 steps
         if (step + 1) % 2 == 0:
-            discriminator.save_checkpoint(generator.optimiser, discriminator.optimiser,  generator, f"{time.time()-start:.2f}sec \n" )
+            generator.save_checkpoint(generator.optimiser, discriminator.optimiser,  generator, f"{time.time()-start:.2f}sec \n" )
 fit(train_ds, test_ds, 4)
 
 for inp, tar in test_ds:

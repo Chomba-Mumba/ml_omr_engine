@@ -8,7 +8,7 @@ env:
   AWS_REGION: ${{ secrets.aws_region }}
 # concurrency required to avoid terraform lock contention during ECR provisioning
 concurrency: ci-${{ github.repository }}-docker-pipeline
-
+#TODO - add ev variables for terraform
 jobs:
   docker:
     runs-on: ubuntu-latest

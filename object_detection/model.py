@@ -3,6 +3,10 @@ import numpy as np
 import os
 import keras
 
+import matplotlib
+matplotlib.use('Agg')# use headless version
+import matplotlib.pyplot as plt
+
 from data_loader import DataLoader
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
@@ -186,14 +190,31 @@ class OMREngineUNet(tf.keras.Model):
         print(f"Checkpoint saved at: {time}")
     def load_checkpoint(self):
         pass
-    def generate_images(self, input, target):
+    def generate_images(self, input, target, out_path="./data/out/"):
         prediction = self(input, training=True)
-        print("generating images")
+        plt.figure(figsize=(15,15))
+        print("generating images...")
 
         display_list = [input[0], target[0], prediction[0]]
+        display_names = ["input", "target", "prediction"]
 
         for i in range(3):
-            print(display_list[i] * 0.5 + 0.5)
+            print(f"generating {display_names[i]}.png...")
+
+            image = display_list[i]
+
+            if hasattr(image, 'numpy'):
+                image = image.numpy()
+
+            if image.shape[-1] == 1:  # grayscale
+                image = image.squeeze(-1)
+            
+            plt.imshow(image * 0.5 + 0.5)
+            plt.axis('off')
+            
+            plt.savefig(f"{out_path+display_names[i]}.png")
+            plt.close()
+
     
 if __name__ == "__main__":
     unet = OMREngineUNet(3)
