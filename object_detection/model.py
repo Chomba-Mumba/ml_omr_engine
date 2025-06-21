@@ -7,7 +7,7 @@ import matplotlib
 matplotlib.use('Agg')# use headless version
 import matplotlib.pyplot as plt
 
-from data_loader import DataLoader
+from pathlib import Path
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, Conv2DTranspose, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization, concatenate
@@ -80,7 +80,8 @@ class OMREnginePatchGan(tf.keras.Model):
 
     def save_checkpoint(self):
         #checkpoint
-        self.checkpoint_dir="./checkpoints/discriminator"
+        base_dir = os.getenv("BASE_DIR", os.path.dirname(os.path.abspath(__file__)))
+        self.checkpoint_dir = os.path.join(base_dir, "checkpoints", "discriminator")
         checkpoint_prefix = os.path.join(self.checkpoint_dir,"chkpt")
 
         self.checkpoint=tf.train.Checkpoint(self)
@@ -191,7 +192,12 @@ class OMREngineUNet(tf.keras.Model):
     
     def save_checkpoint(self):
         #checkpoint
-        self.checkpoint_dir="./checkpoints/generator"
+        base_dir = os.getenv("BASE_DIR", os.path.dirname(os.path.abspath(__file__)))
+        self.checkpoint_dir = os.path.join(base_dir, "checkpoints", "generator")
+
+        #create directory if does not exist
+        Path(self.checkpoint_dir).mkdir(parents=True, exist_ok=True)
+
         checkpoint_prefix = os.path.join(self.checkpoint_dir,"chkpt")
 
         self.checkpoint=tf.train.Checkpoint(self)

@@ -17,8 +17,9 @@ summary_writer = tf.summary.create_file_writer(
 
 loader = DataLoader(1,2)
 
-src_path = "data/input"
-tar_path = "data/target"
+base_dir = os.getenv("BASE_DIR", os.path.dirname(os.path.abspath(__file__)))
+src_path = os.path.join(base_dir, "data", "input")
+tar_path = os.path.join(base_dir, "data", "target")
 
 data = loader.get_dataset(src_path, tar_path)
 train_ds, test_ds, val_ds = loader.split(data)
