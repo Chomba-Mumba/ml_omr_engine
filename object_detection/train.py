@@ -49,6 +49,13 @@ def train_step(input_image, target, step):
 
         discriminator.optimiser.apply_gradients(zip(discriminator_gradients,
                                                     discriminator.trainable_variables))
+        
+        #update checkpoints if needed
+        if generator.total_loss > gen_total_loss:
+            generator.save_checkpoint(best_chkpt=True)
+
+        if discriminator.total_loss > disc_loss:
+            discriminator.save_checkpoint(best_chkpt=True)
 
         with summary_writer.as_default():
             tf.summary.scalar('gen_total_loss', gen_total_loss, step=step//1000)
@@ -58,6 +65,7 @@ def train_step(input_image, target, step):
 
 def fit(train_ds, test_ds, steps):
     start = time.time()
+    
 
     for step, (input_image, target) in enumerate(train_ds.repeat().take(steps)):
         if (step) % 1000 == 0:
@@ -66,7 +74,9 @@ def fit(train_ds, test_ds, steps):
             start = time.time()
 
             print(f"Step: {step//1000}k")
-        train_step(input_image, target, step)
+
+        curr_time = f"{time.time()-start:.2f}sec \n"
+        train_step(input_image, target, step, curr_time)
 
         #training step
         if (step + 1) % 10 == 0:

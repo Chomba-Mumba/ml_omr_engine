@@ -22,6 +22,7 @@ class OMREnginePatchGan(tf.keras.Model):
 
         self.optimiser = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
         self.loss_obj = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+        self.total_loss = float('inf')
 
         #define encoder blocks
         self.encoder_block = []
@@ -78,10 +79,17 @@ class OMREnginePatchGan(tf.keras.Model):
 
         return total_disc_loss
 
-    def save_checkpoint(self):
-        #checkpoint
+    def save_checkpoint(self, best_chkpt=False):
+
         base_dir = os.getenv("BASE_DIR", os.path.dirname(os.path.abspath(__file__)))
-        self.checkpoint_dir = os.path.join(base_dir, "checkpoints", "discriminator")
+        if best_chkpt:
+            self.checkpoint_dir = os.path.join(base_dir, "best_chkpts", "discriminator")
+        else:
+            self.checkpoint_dir = os.path.join(base_dir, "chkpts", "discriminator")
+
+        #create directory if does not exist
+        Path(self.checkpoint_dir).mkdir(parents=True, exist_ok=True)
+
         checkpoint_prefix = os.path.join(self.checkpoint_dir,"chkpt")
 
         self.checkpoint=tf.train.Checkpoint(self)
@@ -103,6 +111,7 @@ class OMREngineUNet(tf.keras.Model):
         
         self.optimiser = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
         self.loss_obj = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+        self.total_loss = float('inf')
 
 
         #define encoder blocks
@@ -190,10 +199,13 @@ class OMREngineUNet(tf.keras.Model):
 
         return total_gen_loss, gan_loss, l1_loss
     
-    def save_checkpoint(self):
-        #checkpoint
+    def save_checkpoint(self, best_chkpt=False):
+
         base_dir = os.getenv("BASE_DIR", os.path.dirname(os.path.abspath(__file__)))
-        self.checkpoint_dir = os.path.join(base_dir, "checkpoints", "generator")
+        if best_chkpt:
+            self.checkpoint_dir = os.path.join(base_dir, "best_chkpts", "generator")
+        else:
+            self.checkpoint_dir = os.path.join(base_dir, "chkpts", "generator")
 
         #create directory if does not exist
         Path(self.checkpoint_dir).mkdir(parents=True, exist_ok=True)
