@@ -77,6 +77,20 @@ class OMREnginePatchGan(tf.keras.Model):
         total_disc_loss = real_loss + generated_loss
 
         return total_disc_loss
+
+    def save_checkpoint(self):
+        #checkpoint
+        self.checkpoint_dir="./checkpoints/discriminator"
+        checkpoint_prefix = os.path.join(self.checkpoint_dir,"chkpt")
+
+        self.checkpoint=tf.train.Checkpoint(self)
+
+        self.checkpoint.save(file_prefix=checkpoint_prefix)
+
+    def load_checkpoint(self, path):
+        checkpoint = tf.train.Checkpoint(self)
+        checkpoint.restore(path).expect_partial
+        print("Discriminator checkpoint officially restored")
     
 
 class OMREngineUNet(tf.keras.Model):
@@ -143,7 +157,7 @@ class OMREngineUNet(tf.keras.Model):
         self.final_conv = Conv2D(n_classes, 1, padding='same')
 
 
-    def call(self,input):
+    def call(self, input):
         #apply encoder and decoder blocks
         skip_conns = []
         for encoder in self.encoder_blocks:
@@ -175,22 +189,21 @@ class OMREngineUNet(tf.keras.Model):
 
         return total_gen_loss, gan_loss, l1_loss
     
-    def save_checkpoint(self,generator_optimiser, discriminator_optimiser, generator, time):
+    def save_checkpoint(self):
         #checkpoint
-        self.checkpoint_dir="./checkpoints"
+        self.checkpoint_dir="./checkpoints/generator"
         checkpoint_prefix = os.path.join(self.checkpoint_dir,"chkpt")
 
-        self.checkpoint=tf.train.Checkpoint(
-            generator_optimizer = generator_optimiser,
-            discriminator_otpmiser = discriminator_optimiser,
-            generator = generator,
-            discriminator=self)
+        self.checkpoint=tf.train.Checkpoint(self)
 
         self.checkpoint.save(file_prefix=checkpoint_prefix)
-        print(f"Checkpoint saved at: {time}")
-    def load_checkpoint(self):
-        pass
-    def generate_images(self, input, target, out_path="./data/out/"):
+
+    def load_checkpoint(self, path):
+        checkpoint = tf.train.Checkpoint(self)
+        checkpoint.restore(path).expect_partial
+        print("Generator checkpoint officially restored")
+
+    def generate_images(self, input, target, out_name, out_path="./data/out/"):
         prediction = self(input, training=True)
         plt.figure(figsize=(15,15))
         print("generating images...")
@@ -199,7 +212,7 @@ class OMREngineUNet(tf.keras.Model):
         display_names = ["input", "target", "prediction"]
 
         for i in range(3):
-            print(f"generating {display_names[i]}.png...")
+            print(f"generating {out_name}_{display_names[i]}.png...")
 
             image = display_list[i]
 
@@ -211,8 +224,8 @@ class OMREngineUNet(tf.keras.Model):
             
             plt.imshow(image * 0.5 + 0.5)
             plt.axis('off')
-            
-            plt.savefig(f"{out_path+display_names[i]}.png")
+
+            plt.savefig(f"{out_path}{out_name}_{display_names[i]}.png")
             plt.close()
 
     

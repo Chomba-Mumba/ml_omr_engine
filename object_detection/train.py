@@ -73,8 +73,12 @@ def fit(train_ds, test_ds, steps):
         
         #save checkpoint every 5000 steps
         if (step + 1) % 2 == 0:
-            generator.save_checkpoint(generator.optimiser, discriminator.optimiser,  generator, f"{time.time()-start:.2f}sec \n" )
+            generator.save_checkpoint()
+            discriminator.save_checkpoint()
+
+            print(f"Checkpoints saved at time: {time.time()-start:.2f}sec \n")
+
 fit(train_ds, test_ds, 4)
 
 for inp, tar in test_ds:
-    generator.generate_images(inp, tar)
+    generator.generate_images(inp, tar, "test")
