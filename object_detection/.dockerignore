@@ -17,5 +17,5 @@ data/
 .idea/
 
 Dockerfile
-dockerfile  # in case lowercase is used
+dockerfile 
 .dockerignore

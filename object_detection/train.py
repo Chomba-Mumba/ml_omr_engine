@@ -27,7 +27,7 @@ train_ds, test_ds, val_ds = loader.split(data)
 discriminator, generator = OMREnginePatchGan(3), OMREngineUNet(3)
 
 @tf.function
-def train_step(input_image, target, step):
+def train_step(input_image, target, step, curr_time):
     with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
         #generate image and analyse discriminator 
         gen_output = generator(input_image, training=True)
@@ -53,9 +53,11 @@ def train_step(input_image, target, step):
         #update checkpoints if needed
         if generator.total_loss > gen_total_loss:
             generator.save_checkpoint(best_chkpt=True)
+            print(f"New best generator weights found at {curr_time} saving model...")
 
         if discriminator.total_loss > disc_loss:
             discriminator.save_checkpoint(best_chkpt=True)
+            print(f"New best discriminator weights found at {curr_time} saving model...")
 
         with summary_writer.as_default():
             tf.summary.scalar('gen_total_loss', gen_total_loss, step=step//1000)
@@ -82,14 +84,16 @@ def fit(train_ds, test_ds, steps):
         if (step + 1) % 10 == 0:
             print('.',end='',flush=True)
         
-        #save checkpoint every 5000 steps
-        if (step + 1) % 2 == 0:
+        #save checkpoint every 200 steps
+        if (step + 1) % 200 == 0:
             generator.save_checkpoint()
             discriminator.save_checkpoint()
 
             print(f"Checkpoints saved at time: {time.time()-start:.2f}sec \n")
 
-fit(train_ds, test_ds, 4)
+fit(train_ds, test_ds, len(train_ds))
+
+print("Successfully trained GAN with best training weights saved.")
 
 for inp, tar in test_ds:
     generator.generate_images(inp, tar, "test")
