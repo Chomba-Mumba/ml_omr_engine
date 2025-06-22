@@ -1,7 +1,6 @@
 import tensorflow as tf
 import numpy as np
 import os
-import keras
 
 import matplotlib
 matplotlib.use('Agg')# use headless version
@@ -132,7 +131,7 @@ class OMREngineUNet(tf.keras.Model):
 
             block.append(tf.keras.layers.LeakyReLU())
             
-            self.encoder_blocks.append(keras.Sequential(block))
+            self.encoder_blocks.append(tf.keras.Sequential(block))
 
         #define decoder blocks
         self.decoder_blocks = []
@@ -153,7 +152,7 @@ class OMREngineUNet(tf.keras.Model):
             
             block.append(tf.keras.layers.ReLU())
 
-            self.decoder_blocks.append(keras.Sequential(block))
+            self.decoder_blocks.append(tf.keras.Sequential(block))
 
         #add final layers for the model
         self.pen_conv = Conv2D(n_filters,
