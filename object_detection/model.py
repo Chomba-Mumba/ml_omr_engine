@@ -94,7 +94,7 @@ class OMREnginePatchGan(tf.keras.Model):
 
         self.checkpoint=tf.train.Checkpoint(self)
 
-        self.checkpoint.save(file_prefix=checkpoint_prefix)
+        self.checkpoint.write(file_prefix=checkpoint_prefix)
 
     def load_checkpoint(self, path):
         checkpoint = tf.train.Checkpoint(self)
@@ -214,7 +214,7 @@ class OMREngineUNet(tf.keras.Model):
 
         self.checkpoint=tf.train.Checkpoint(self)
 
-        self.checkpoint.save(file_prefix=checkpoint_prefix)
+        self.checkpoint.write(file_prefix=checkpoint_prefix)
 
     def load_checkpoint(self, path):
         checkpoint = tf.train.Checkpoint(self)
