@@ -7,6 +7,7 @@ matplotlib.use('Agg')# use headless version
 import matplotlib.pyplot as plt
 
 from pathlib import Path
+from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, Conv2DTranspose, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization, concatenate
