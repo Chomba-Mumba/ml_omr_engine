@@ -14,7 +14,7 @@ terraform {
 
   backend "s3" {
     bucket = ""
-    key = ""
+    key = "terraform.tfstate"
     region = ""
     encrypt = true
     use_lockfile = true
