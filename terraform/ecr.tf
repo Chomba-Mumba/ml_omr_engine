@@ -16,7 +16,7 @@ resource "aws_ecr_lifecycle_policy" "ml_ecr_lifecycle_policy" {
   policy = jsonencode({
     rules = [
       {
-        rule_priority = 1
+        rulePriority = 1
         description   = "Keep only 5 images"
         selection     = {
           count_type        = "imageCountMoreThan"
