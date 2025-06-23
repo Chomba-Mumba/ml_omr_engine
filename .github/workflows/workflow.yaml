@@ -38,7 +38,11 @@ jobs:
       - name: TF init
         shell: bash
         run: |
-          terraform init -upgrade -reconfigure
+          terraform init \
+            -backend-config="bucket=$TF_BACKEND_BUCKET" \
+            -backend-config="region=$AWS_REGION" \
+            -upgrade \
+            -reconfigure
         working-directory: terraform
 
       - name: Create ECR repo [TF apply]
@@ -49,8 +53,6 @@ jobs:
             -var 'ecr_repo_name=$ECR_REPO_NAME' \
             -var 'aws_region=$AWS_REGION'\
             -var 'aws_acc_id=$AWS_ACCOUNT_ID' \
-            -backend-config="bucket=$TF_BACKEND_BUCKET" \
-            -backend-config="region=$AWS_REGION" \
             -auto-approve
         working-directory: terraform
 
