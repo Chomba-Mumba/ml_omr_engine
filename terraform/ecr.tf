@@ -19,10 +19,10 @@ resource "aws_ecr_lifecycle_policy" "ml_ecr_lifecycle_policy" {
         rulePriority = 1
         description   = "Keep only 5 images"
         selection     = {
-          count_type        = "imageCountMoreThan"
-          count_number      = 5
-          tag_status        = "tagged"
-          tag_prefix_list   = ["prod"]
+          countType        = "imageCountMoreThan"
+          countNumber      = 5
+          tagStatus        = "tagged"
+          tagPrefixList   = ["prod"]
         }
         action = {
           type = "expire"
