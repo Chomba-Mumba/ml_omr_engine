@@ -6,9 +6,10 @@ env:
   TF_LOG: INFO
   AWS_ACCOUNT_ID: ${{ secrets.aws_account_id }}
   AWS_REGION: ${{ secrets.aws_region }}
+  ECR_REPOSITORY: ${{ secrets.ECR_REPO_NAME }}
 # concurrency required to avoid terraform lock contention during ECR provisioning
 concurrency: ci-${{ github.repository }}-docker-pipeline
-#TODO - add ev variables for terraform
+
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -24,7 +25,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: arn:aws:iam::$AWS_ACCOUNT_ID:role/github_actions_omr_engine_role
-          aws-region: ${{ inputs.aws_region }}
+          aws-region: $AWS_REGION
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -35,32 +36,26 @@ jobs:
         shell: bash
         run: |
           terraform init -upgrade -reconfigure
-        working-directory: ${{ github.action_path }}
+        working-directory: terraform
 
       - name: Create ECR repo [TF apply]
         shell: bash
         run: |
           set -eux
           terraform apply \
-            -var 'repository_name=${{ env.ECR_REPO_NAME }}' \
-            -var 'iam_role=arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.github_iam_role }}' \
-            -var 'aws_account_id=${{ inputs.aws_account_id }}' \
+            -var 'ecr_repo_name=$ECR_REPO_NAME' \
+            -var 'aws_region=$AWS_REGION'
+            -var 'aws_acc_id=$AWS_ACCOUNT_ID' \
             -auto-approve
-        working-directory: ${{ github.action_path }}
+        working-directory: terraform
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-        with:
-          registries: ${{ secrets.aws_account_id }}
 
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-publish
-        shell: bash
+      - name: Build, tag, and push docker image to Amazon ECR
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPO }}
-        run: |
-          echo "IMAGE $IMAGE_TAG is pushed to $ECR_REGISTRY/$ECR_REPOSITORY"
-          echo "image_tag=$IMAGE_TAG" 
-          echo "full_image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          REPOSITORY: my-ecr-repo
+          IMAGE_TAG: ${{ github.sha }}
+        run: bash scripts/build_and_push.sh
+          

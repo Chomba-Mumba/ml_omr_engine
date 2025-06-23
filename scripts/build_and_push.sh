@@ -9,7 +9,7 @@ for dir in ./* do
     #check for dockerfile and build
     for file in ./* do
         if [ "${file}" = "dockerfile" ] then
-            docker build -t "${directory}:latest" .
-            docker push "${ECR_REPOSITORY}"
+            docker build -t "${directory}:${IMAGE_TAG}" .
+            docker push "${directory}:${IMAGE_TAG}4"
         fi
 done
