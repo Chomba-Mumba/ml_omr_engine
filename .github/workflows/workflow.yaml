@@ -9,6 +9,7 @@ env:
   AWS_ACCOUNT_ID: ${{ secrets.aws_account_id }}
   AWS_REGION: ${{ secrets.aws_region }}
   ECR_REPOSITORY: ${{ secrets.ECR_REPO_NAME }}
+  TF_BACKEND_BUCKET: ${{ secrets.tf_backend_bucket }}
 # concurrency required to avoid terraform lock contention during ECR provisioning
 concurrency: ci-${{ github.repository }}-docker-pipeline
 
@@ -46,8 +47,10 @@ jobs:
           set -eux
           terraform apply \
             -var 'ecr_repo_name=$ECR_REPO_NAME' \
-            -var 'aws_region=$AWS_REGION'
+            -var 'aws_region=$AWS_REGION'\
             -var 'aws_acc_id=$AWS_ACCOUNT_ID' \
+            -backend-config="bucket=$TF_BACKEND_BUCKET" \
+            -backend-config="region=$AWS_REGION" \
             -auto-approve
         working-directory: terraform
 
