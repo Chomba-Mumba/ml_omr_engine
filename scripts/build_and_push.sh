@@ -8,7 +8,7 @@ for dir in ./*; do
     fi
 
     #check for dockerfile and build
-    if [-f "$dir/Dockerfile" ]; then
+    if [ -f "$dir/Dockerfile" ]; then
         image_uri="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}"
 
         echo "building docker image ${dir}:${IMAGE_TAG}"
