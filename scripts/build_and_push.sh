@@ -1,4 +1,5 @@
 #!/bin/bash
+cd ../
 
 for dir in ./*; do 
     #if not a directory then skip

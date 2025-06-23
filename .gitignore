@@ -1,7 +1,7 @@
 /*/venv
 /venv
 *.tfvars
-object_detection/data/
+staff_line_removal/data/
 !terraform.tfvars.example
 
 **/.terraform/*

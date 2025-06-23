@@ -63,5 +63,6 @@ jobs:
       - name: Build, tag, and push docker image to Amazon ECR
         env:
           IMAGE_TAG: ${{ github.sha }}
-        run: bash scripts/build_and_push.sh
+        run: bash build_and_push.sh
+        working-directory: scripts
           
