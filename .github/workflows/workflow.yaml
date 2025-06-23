@@ -50,9 +50,9 @@ jobs:
         run: |
           set -eux
           terraform apply \
-            -var 'ecr_repo_name=$ECR_REPO_NAME' \
-            -var 'aws_region=$AWS_REGION'\
-            -var 'aws_acc_id=$AWS_ACCOUNT_ID' \
+            -var "ecr_repo_name=$ECR_REPO_NAME" \
+            -var "aws_region=$AWS_REGION" \
+            -var "aws_acc_id=$AWS_ACCOUNT_ID" \
             -auto-approve
         working-directory: terraform
 
