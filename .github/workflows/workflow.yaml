@@ -8,7 +8,7 @@ env:
   TF_LOG: INFO
   AWS_ACCOUNT_ID: ${{ secrets.aws_account_id }}
   AWS_REGION: ${{ secrets.aws_region }}
-  ECR_REPO_NAME: ${{ secrets.ECR_REPO_NAME }}
+  ECR_REPO_NAME: ${{ secrets.ECR_REPO }}
   TF_BACKEND_BUCKET: ${{ secrets.tf_backend_bucket }}
 # concurrency required to avoid terraform lock contention during ECR provisioning
 concurrency: ci-${{ github.repository }}-docker-pipeline
