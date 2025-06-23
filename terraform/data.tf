@@ -24,7 +24,7 @@ data "aws_iam_policy_document" "ml_ecr_policy" {
         effect = "Allow"
         principals {
             type = "AWS"
-            identifiers = ["arn:aws:iam::${local.account-id}:role/${var.iam_role}"] // TODO - change to OIDC
+            identifiers = ["arn:aws:iam::${var.aws_acc_id}:role/github_actions_omr_engine_role"]
         }
         actions = ["ecr:BatchCheckLayerAvailability",
             "ecr:CompleteLayerUpload",
