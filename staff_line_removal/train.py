@@ -64,7 +64,7 @@ def train_step(input_image, target, step, curr_time):
             tf.summary.scalar('gen_l1_loss', gen_l1_loss, step=step//1000)
             tf.summary.scalar('disc_loss', disc_loss, step=step//1000)
 
-def fit(train_ds, test_ds, steps):
+def fit(generator, discriminator, train_ds, test_ds, steps):
     start = time.time()
     
 
@@ -90,7 +90,7 @@ def fit(train_ds, test_ds, steps):
 
             print(f"Checkpoints saved at time: {time.time()-start:.2f}sec \n")
 
-fit(train_ds, test_ds, len(train_ds))
+fit(generator, discriminator, train_ds, test_ds, len(train_ds))
 
 print("Successfully trained GAN with best training weights saved.")
 
