@@ -21,7 +21,7 @@ def randomise_hyperparams():
 
 class Individual:
     def __init__(self):
-        #generator and discrimnator chromosomesosomes
+        #generator and discrimnator chromosomes
         self.gen_chromosomes = randomise_hyperparams()
         self.disc_chromosomes = randomise_hyperparams()
 
@@ -43,10 +43,10 @@ class Population:
         self.mut_rate = mut_rate
         self.population = [Individual() for _ in range(len(pop_size))]
 
-    def selection(self):#TODO - which individuals are slected during selection?
+    def selection(self):
         selected = []
 
-        for _ in range(self.pop_size):
+        for _ in range(self.pop_size)//2:
             #tournament selection with 3 individuals
             contenders = random.sample(self.population, 3)
             winner = max(contenders, key=lambda ind: ind.fitness)
@@ -99,7 +99,7 @@ class Population:
             child.generator = OMREngineUNet(**child.gen_chromosomes)
             child.discriminator = OMREnginePatchGan(**child.disc_chromosomes)
             new_population.append(child)
-            
+
         self.population = new_population
 
 def run_geneteic_algorithm():
