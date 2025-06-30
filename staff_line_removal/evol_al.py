@@ -3,6 +3,7 @@ import tensorflow as tf
 import numpy as np
 import random
 import os
+import gc
 
 from train import fit
 from model import OMREnginePatchGan, OMREngineUNet
@@ -20,15 +21,17 @@ def randomise_hyperparams():
 
 class Individual:
     def __init__(self):
-        self.gen_chrom = randomise_hyperparams()
-        self.disc_chrom = randomise_hyperparams()
+        #generator and discrimnator chromosomesosomes
+        self.gen_chromosomes = randomise_hyperparams()
+        self.disc_chromosomes = randomise_hyperparams()
+
         self.fitness = None
         self.train_ds, self.test_ds = None, None
 
         #randomise hyper parameters
-        self.generator = OMREngineUNet(**self.chrom)
+        self.generator = OMREngineUNet(**self.gen_chromosomes)
 
-        self.discriminator = OMREnginePatchGan(**self.chrom)
+        self.discriminator = OMREnginePatchGan(**self.disc_chromosomes)
 
     def cal_fitness(self, num_epochs):
         self.fitness = fit(self.generator, self.discriminator, self.train_ds, self.test_ds, num_epochs)
@@ -55,15 +58,21 @@ class Population:
         child = Individual()
 
         #select hyperparameters between parents for child
-        for key in child.chrom:
-            child.chrom[key] = random.choice([p1.chrom[key], p2.chrom[key]])
+        for key in child.gen_chromosomes:
+
+            #discriminator
+            child.disc_chromosomes[key] = random.choice([p1.disc_chromosomes[key], p2.disc_chromosomes[key]])
+
+            #generator
+            child.gen_chromosomes[key] = random.choice([p1.gen_chromosomes[key], p2.gen_chromosomes[key]])
 
         return child
 
     def mutate(self, individual):
-        for key in individual.chrom:
+        for key in individual.gen_chromosomes:
             if random.random() < self.mut_rate:
-                individual.chrom[key] = randomise_hyperparams()[key]
+                individual.gen_chromosomes[key] = randomise_hyperparams()[key]
+                individual.disc_chromosomes[key] = randomise_hyperparams()[key]
     
     def evolve(self, train_ds, test_ds, num_epochs):
         #provide data
@@ -81,9 +90,16 @@ class Population:
             parent1, parent2 = random.sample(selected, 2)
             child = self.crossover(parent1, parent2)
             self.mutate(child)
-            child.generator = OMREngineUNet(**child.gen_chrom)
-            child.discriminator = OMREnginePatchGan(**child.disc_chrom)
+
+            #replace generator and discriminator
+            del child.generator
+            del child.discriminator
+            gc.collect() #remove deleted models from memory
+
+            child.generator = OMREngineUNet(**child.gen_chromosomes)
+            child.discriminator = OMREnginePatchGan(**child.disc_chromosomes)
             new_population.append(child)
+            
         self.population = new_population
 
 def run_geneteic_algorithm():
